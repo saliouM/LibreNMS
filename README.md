@@ -1,6 +1,3 @@
-Voici une version réorganisée et structurée de votre README pour l'installation de LibreNMS :
-
-
 
 ### Partie 1 
 
