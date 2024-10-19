@@ -351,3 +351,166 @@ snmp-server enable traps vtp
 
 Cette section permet de configurer des traps SNMP avancés pour la gestion des événements sur un switch Cisco. Assurez-vous de tester la configuration après l’avoir appliquée pour vérifier la réception des traps SNMP par l'hôte LibreNMS.
 
+### Partie 3 : Correction des erreurs
+
+### Erreurs à Corriger
+
+Dans la configuration de LibreNMS et des équipements Cisco, il est possible de rencontrer des erreurs liées aux permissions, aux logs, à la configuration de SNMP ou à la synchronisation des fuseaux horaires. Voici quelques erreurs courantes et comment les corriger.
+
+---
+
+### Corrections apportées
+
+#### Problème d'accès au fichier de log
+
+Si Apache fonctionne sous l'utilisateur `www-data`, cet utilisateur doit avoir les permissions nécessaires pour écrire dans le fichier de log `/opt/librenms/logs/librenms.log`.
+
+##### Étapes pour corriger l'erreur :
+
+1. **Créer le fichier de log (si non existant)** :
+   ```bash
+   sudo touch /opt/librenms/logs/librenms.log
+   ```
+
+2. **Attribuer les permissions à `www-data`** :
+   ```bash
+   sudo chown -R www-data:www-data /opt/librenms/logs
+   sudo chmod -R 775 /opt/librenms/logs
+   ```
+
+3. **Vérifier la configuration de LibreNMS** :
+   Assurez-vous que la variable `LOG_DIR` dans `/opt/librenms/config.php` pointe bien vers `/opt/librenms/logs` :
+   ```php
+   $config['log_dir'] = '/opt/librenms/logs';
+   ```
+
+4. **Redémarrer Apache et PHP-FPM** :
+   ```bash
+   sudo systemctl restart apache2
+   sudo systemctl restart php8.3-fpm
+   ```
+
+5. **Vérifier les logs Apache pour d'autres erreurs** :
+   ```bash
+   sudo tail -f /var/log/apache2/error.log
+   ```
+
+---
+
+#### Problème de fichier `config.php` vide
+
+Si le fichier `/opt/librenms/config.php` est vide, cela indique que la configuration n'a pas été correctement générée.
+
+##### Étapes pour recréer `config.php` :
+
+1. **Exécuter l'assistant web** :
+   Accédez à l'URL `http://votre_ip_ou_domaine/install.php` et suivez les instructions.
+
+2. **Créer manuellement `config.php` (si nécessaire)** :
+   Exemple basique de configuration :
+   ```php
+   <?php
+   $config['db_host'] = 'localhost';
+   $config['db_user'] = 'librenms';
+   $config['db_pass'] = 'votre_mot_de_passe';
+   $config['db_name'] = 'librenms';
+   $config['user'] = 'librenms';
+   $config['log_dir'] = '/opt/librenms/logs';
+   $config['snmp']['community'] = array('public');
+   ```
+
+3. **Vérifier les permissions** :
+   ```bash
+   sudo chown www-data:www-data /opt/librenms/config.php
+   sudo chmod 644 /opt/librenms/config.php
+   ```
+
+4. **Redémarrer Apache et PHP-FPM** :
+   ```bash
+   sudo systemctl restart apache2
+   sudo systemctl restart php8.3-fpm
+   ```
+
+---
+
+#### Problème de fuseau horaire avec MySQL et LibreNMS
+
+Le fuseau horaire de MySQL est configuré sur `SYSTEM`, mais une erreur dans LibreNMS peut indiquer un décalage d'une heure entre MySQL et PHP. Ce problème est souvent causé par une mauvaise synchronisation des fuseaux horaires ou des services NTP.
+
+##### Étapes de résolution :
+
+1. **Vérifiez l'heure du système Linux** :
+   ```bash
+   timedatectl
+   ```
+   Pour définir le fuseau horaire correct (exemple : `Africa/Libreville`) :
+   ```bash
+   sudo timedatectl set-timezone Africa/Libreville
+   ```
+
+2. **Synchronisez l'horloge avec NTP** :
+   Installez et configurez `chrony` pour synchroniser l'heure :
+   ```bash
+   sudo apt update
+   sudo apt install chrony
+   sudo systemctl enable chrony
+   sudo systemctl start chrony
+   ```
+
+   Vérifiez la synchronisation :
+   ```bash
+   chronyc tracking
+   ```
+
+3. **Vérifiez l'heure de MySQL** :
+   Connectez-vous à MySQL et vérifiez l'heure actuelle :
+   ```bash
+   sudo mysql -u root -p
+   SELECT NOW();
+   ```
+   Comparez cette heure avec celle du système :
+   ```bash
+   date
+   ```
+
+4. **Vérifiez la configuration de PHP** :
+   Redémarrez les services pour vous assurer que PHP utilise le bon fuseau horaire :
+   ```bash
+   sudo systemctl restart php8.3-fpm
+   sudo systemctl restart apache2
+   ```
+
+5. **Testez dans LibreNMS** :
+   Accédez à l'interface web de LibreNMS pour vérifier si l'erreur de fuseau horaire est corrigée.
+
+---
+
+### Résolution de problèmes de permissions dans LibreNMS
+
+1. **Ajoutez `/opt/librenms` comme répertoire Git sûr** :
+   ```bash
+   sudo git config --global --add safe.directory /opt/librenms
+   ```
+
+2. **Vérifiez et corrigez les permissions** :
+   ```bash
+   sudo chown -R librenms:librenms /opt/librenms
+   sudo chmod -R 775 /opt/librenms
+   ```
+
+3. **Basculez sur la branche `master` si nécessaire** :
+   ```bash
+   cd /opt/librenms
+   git branch  # Vérifiez la branche actuelle
+   sudo git checkout master  # Passez à la branche master
+   ```
+
+4. **Mettez à jour LibreNMS** :
+   ```bash
+   sudo ./daily.sh
+   ```
+
+Ces étapes devraient résoudre les erreurs courantes rencontrées lors de la configuration et de l'utilisation de LibreNMS et des équipements Cisco.
+
+
+
