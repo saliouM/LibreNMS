@@ -468,10 +468,21 @@ Le fuseau horaire de MySQL est configuré sur `SYSTEM`, mais une erreur dans Lib
    sudo mysql -u root -p
    SELECT NOW();
    ```
+  ```sql
+  SELECT * FROM mysql.time_zone_name;
+  ```
    Comparez cette heure avec celle du système :
    ```bash
    date
    ```
+4. **Régler le fuseau horaire**
+
+Si `Africa/Libreville` est maintenant dans la liste, vous pouvez le définir comme suit :
+
+```sql
+SET GLOBAL time_zone = 'Africa/Libreville';
+SET SESSION time_zone = 'Africa/Libreville';
+```
 
 4. **Vérifiez la configuration de PHP** :
    Redémarrez les services pour vous assurer que PHP utilise le bon fuseau horaire :
