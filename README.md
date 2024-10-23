@@ -223,9 +223,7 @@ cp /opt/librenms/misc/lnms-completion.bash /etc/bash_completion.d/
 
 2. Modifiez le fichier de configuration pour définir votre propre chaîne de communauté :
    ```bash
-   vi
-
- /etc/snmp/snmpd.conf
+   vi /etc/snmp/snmpd.conf
    ```
 
 3. Redémarrez le service SNMP :
